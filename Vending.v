@@ -1,225 +1,137 @@
-`timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
-// 
-// Create Date: 29.05.2023 11:29:52
-// Design Name: 
-// Module Name: vending_machine
-// Project Name: 
-// Target Devices: 
-// Tool Versions: 
-// Description: 
-// 
-// Dependencies: 
-// 
-// Revision:
-// Revision 0.01 - File Created
-// Additional Comments:
-// 
-//////////////////////////////////////////////////////////////////////////////////
+module fsm(clock,reset,coin,vend,state,change);
+//these are the inputs and the outputs.
+input clock;
+input reset;
+input [2:0]coin;
+output vend;
+output [2:0]state;
+output [2:0]change;
 
+reg vend;
+reg [2:0]change;
+wire [2:0]coin;
 
-module vending_machine(
-  input clk,
-  input rst,
-  input [2:0]in, // 001 = 5 rs, 010 = 10 rs, 011 = 15rs, 100 = 20rs
-  output reg out,
-  output reg[2:0] change
-);
-  parameter s0 = 3'b000;
-  parameter s1 = 3'b001;
-  parameter s2 = 3'b010;
-  parameter s3 = 3'b011;
-  parameter s4 = 3'b100;
+  parameter [2:0]FIVE_RUPEE=3'b001;
+  parameter [2:0]TEN_RUPEE=3'b010;
+  parameter [2:0]FIFTEEN_RUPEE=3'b011;
+  parameter [2:0]TWENTY_RUPEE=3'b101;
   
-	reg[2:0] c_state,n_state;
-  
-	always@ (posedge clk)
-	begin
-        if(rst == 1)
-            begin
-                c_state <= 0;
-                //n_state = 0;
-                change <= 3'b000;
-                out<=0;
-            end
-        else
-            c_state <= n_state;
-        case(c_state)
-            
-            s0:begin//state 0 : 0 r
-                case(in)
-                0:begin
-                    out<=0;
-                    change<=0;
-                end
-                1:begin
-                    out<=0;
-                    change<=0;
-                end
-                2:begin
-                    out<=0;
-                    change<=0;
-                end
-                3:begin
-                    out<=0;
-                    change<=0;
-                end
-                4:begin
-                    out<=0;
-                    change<=0;
-                end
-                 
-                
-            endcase
-        end
-        s1:begin//state 0 : 0 r
-            case(in)
-                0:begin
-                    out<=0;
-                    change<=1;
-                end
-                1:begin
-                    out<=0;
-                    change<=0;
-                end
-                2:begin
-                    out<=0;
-                    change<=0;
-                end
-                3:begin
-                    out<=0;
-                    change<=0;
-                end
-                4:begin
-                    out<=1;
-                    change<=0;
-                end
-            endcase
-        end
-        s2:begin//state 0 : 0 r
-            case(in)
-                0:begin
-                    out=0;
-                    change=2;
-                end
-                1:begin
-                    out=0;
-                    change=0;
-                end
-                2:begin
-                    out=0;
-                    change=0;
-                end
-                3:begin
-                    out=1;
-                    change=0;
-                end
-                4:begin
-                    out=1;
-                    change=1;
-                end
-            endcase
-        end
-        s3:begin//state 0 : 0 r
-            case(in)
-                0:begin
-                    out=0;
-                    change=3;
-                end
-                1:begin
-                    out=0;
-                    change=0;
-                end
-                2:begin
-                    out=1;
-                    change=0;
-                end
-                3:begin
-                    out=1;
-                    change=1;
-                end
-                4:begin
-                    out=1;
-                    change=2;
-                end
-            endcase
-        end
-        s4:begin//state 0 : 0 r
-            case(in)
-                0:begin
-                    out=0;
-                    change=4;
-                end
-                1:begin
-                    out=1;
-                    change=0;
-                end
-                2:begin
-                    out=1;
-                    change=1;
-                end
-                3:begin
-                    out=1;
-                    change=2;
-                end
-                4:begin
-                    out=1;
-                    change=3;
-                end
-            endcase
-        end
-            default:c_state<=s0;
-    endcase
+  parameter [2:0]IDLE=3'b000;
+  parameter [2:0]FIVE=3'b001;
+  parameter [2:0]TEN=3'b010;
+  parameter [2:0]FIFTEEN=3'b011;
+  parameter [2:0]TWENTY=3'b100;
+  parameter [2:0]TWENTYFIVE=3'b101;
+reg [2:0]state,next_state;
+always @(state or coin)
+begin
+next_state=0; 
+case(state)
+  IDLE: case(coin) //THIS IS THE IDLE STATE
+FIVE_RUPEE: next_state =FIVE;
+TEN_RUPEE: next_state =TEN;
+TWENTY_RUPEE: next_state =TWENTY;
+default: next_state =IDLE;
+endcase
+  FIVE: case(coin) 
+FIVE_RUPEE: next_state =TEN;
+TEN_RUPEE: next_state =FIFTEEN;
+TWENTY_RUPEE: next_state =TWENTYFIVE; //change=0
+default: next_state =FIVE;
+endcase
+  TEN: case(coin) //THIS IS THE THIRD STATE
+FIVE_RUPEE: next_state =FIFTEEN;
+TEN_RUPEE: next_state =TWENTY;
+TWENTY_RUPEE: next_state =IDLE; //change=0
+default: next_state =TEN;
+endcase
+  FIFTEEN: case(coin) //THIS IS THE FOURTH STATE
+FIVE_RUPEE: next_state =TWENTY;
+TEN_RUPEE: next_state =TWENTYFIVE;
+TWENTY_RUPEE: next_state =IDLE; 
+default: next_state =FIFTEEN;
+endcase
+  TWENTY: case(coin) //THIS IS THE FIFTH STATE
+FIVE_RUPEE: next_state =TWENTYFIVE;
+TEN_RUPEE: next_state=IDLE; //change=0
+TWENTY_RUPEE: next_state =IDLE; 
+default: next_state =TWENTY;
+endcase
+TWENTYFIVE: next_state =IDLE;
+default : next_state =IDLE;
+endcase
+end
+  always @(posedge clock)
+begin //WHENEVER I GIVE A RESET I HAVE TO MAKE THE STATE TO IDLE AND VEND TO 1
+if(reset) begin
+state <= IDLE;
+vend <= 1'b0;
+ change <= 3'b000;
+end //THE CNGE ALSO HAS TO BECOME NONE
+else state <= next_state;
+
+ case (state) 
+IDLE: begin vend <= 1'b0;
+  change <=3'd0;
+end
+   FIVE: begin 
+    
+     if (coin==TWENTY_RUPEE) begin
+        vend <= 1'b0;
+       change <=3'd0;
+     end
+     else begin
+        vend <= 1'b0;
+       change <=3'd0;
+     end
+       end
+     TEN: begin
+        
+       if (coin==TWENTY_RUPEE) begin 
+     vend <= 1'b1;
+    change <=3'd0; 
+       end
+  else  begin
+     vend <= 1'b0;
+    change <= 3'd0;
+  end
     end
-    always @(in or c_state) begin
-        n_state=0;
-        case(c_state)
-            s0:begin
-                case(in)
-                    0:n_state=s0;
-                    1:n_state=s1;
-                    2:n_state=s2;
-                    3:n_state=s3;
-                    4:n_state=s4;
-                    default:n_state=s0;
-                endcase
-            end
-            s1:begin
-                case(in)
-                    0:n_state=s1;
-                    1:n_state=s2;
-                    2:n_state=s3;
-                    3:n_state=s4;
-                    4:n_state=s0;
-                    default:n_state=s1;
-                endcase
-            end
-            s2:begin
-                case(in)
-                    0:n_state=s2;
-                    1:n_state=s3;
-                    2:n_state=s4;
-                    3:n_state=s0;
-                    4:n_state=s0;
-                    default:n_state=s2;
-                endcase
-            end
-            s3:begin
-                case(in)
-                    0:n_state=s3;
-                    1:n_state=s4;
-                    2:n_state=s0;
-                    3:n_state=s0;
-                    4:n_state=s0;
-                    default:n_state=s3;
-                endcase
-            end
-            s4:begin
-                n_state=s0;
-            end
-            default:n_state=s0;
-        endcase
+  FIFTEEN : begin
+    if (coin==TWENTY_RUPEE) begin
+      vend <= 1'b1; 
+      change <=FIVE_RUPEE;
+  end
+    else begin
+       vend <= 1'b0; 
+      change<=3'd0;
     end
+  end
+    TWENTY : begin 
+       
+      if (coin==TEN_RUPEE) begin
+        vend <= 1'b1;
+        change <=3'd0;
+      end
+      else if (coin==TWENTY_RUPEE) begin
+        vend <= 1'b1;
+        change <=TEN_RUPEE;
+      end
+    end
+        TWENTYFIVE : begin
+          if(coin==FIVE_RUPEE) begin
+          vend <= 1'b1;
+          change <=3'd0;
+          end
+          else if(coin==TEN_RUPEE) begin
+            vend <= 1'b1;
+          change <=FIVE_RUPEE;
+          end
+          else begin
+            vend <= 1'b1;
+          change <=FIFTEEN_RUPEE;
+          end
+        end
+default: state <= IDLE;
+endcase
+end
 endmodule
